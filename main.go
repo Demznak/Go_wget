@@ -5,13 +5,49 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
-func DownloadFile(fileParam *FileParams) {
+const byteToKByte = 1024
+
+var (
+	progress map[string]int64
+	mx       sync.Mutex
+)
+
+func init() {
+	progress = make(map[string]int64)
+}
+
+type FileWriter struct {
+	Total     int64
+	AllLength int64
+	Progress  int64
+	FileName  string
+	Uri       string
+}
+
+func (wf *FileWriter) Write(p []byte) (int, error) {
+	n := len(p)
+	if n > 0 {
+		wf.Total += int64(n)
+		percentage := float64(wf.Total) / float64(wf.AllLength) * float64(100)
+		if int64(percentage)-wf.Progress > 0 {
+			wf.Progress = int64(percentage)
+			mx.Lock()
+			progress[wf.FileName] = wf.Progress
+			mx.Unlock()
+		}
+	}
+
+	return n, nil
+}
+
+func DownloadFile(fileParam *FileWriter) {
 	response, err := http.Get(fileParam.Uri)
 	if err != nil {
 		fmt.Printf("\n\t\terr download: %s\n", err.Error())
@@ -24,7 +60,6 @@ func DownloadFile(fileParam *FileParams) {
 	}
 
 	fileParam.AllLength = response.ContentLength
-	fileParam.Reader = response.Body
 
 	out, err := os.Create(fileParam.FileName)
 	defer out.Close()
@@ -33,30 +68,35 @@ func DownloadFile(fileParam *FileParams) {
 		fmt.Printf("create file error: %s \n", err.Error())
 	}
 
-	time.Sleep(time.Second * 2)
-	size, err := io.Copy(out, fileParam)
+	fileSize, err := io.Copy(out, io.TeeReader(response.Body, fileParam))
+
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	fmt.Printf("\n\t\t\t%s Transferred. (%.1f KB)\n\n", fileParam.FileName, float64(size)/byteToKbyte)
+	fmt.Printf("\n\t\t\t File %s transferred (%.1f KB).\n\n", fileParam.FileName, float64(fileSize)/byteToKByte)
 }
 
 func PrintProgress(bEndDownload chan bool) {
-	files := mapFilesProgress.GetFileNames()
+	files := []string{}
+	mx.Lock()
+	for key, _ := range progress {
+		files = append(files, key)
+	}
+	mx.Unlock()
+
 	fmt.Println(strings.Join(files, " | "))
 
 	for {
 		time.Sleep(time.Second)
 		strProgress := ""
 		for _, val := range files {
-			progressInt, ok := mapFilesProgress.GetProgressFile(val)
-			if !ok {
-				progressInt = 0
+			mx.Lock()
+			if progressInt, ok := progress[val]; ok {
+				strProgress += strconv.FormatInt(progressInt, 10) + "% "
 			}
-			//strProgress += string(progress) + "% "
-			strProgress += strconv.FormatInt(progressInt, 10) + "% "
+			mx.Unlock()
 		}
 		fmt.Println(strProgress)
 		select {
@@ -67,6 +107,7 @@ func PrintProgress(bEndDownload chan bool) {
 		}
 	}
 }
+
 func main() {
 	var wg sync.WaitGroup
 
@@ -81,14 +122,20 @@ func main() {
 
 	wg.Add(urlCount)
 	for _, val := range urls {
-		fileName := getFilename(val)
-		mapFilesProgress.SetProgressFile(fileName, 0)
+		fileName := path.Base(val)
+		if fileName == "" || fileName == "." {
+			fileName = "download_" + time.Now().String()
+		}
 
-		go func(filesParam *FileParams) {
+		mx.Lock()
+		progress[fileName] = 0
+		mx.Unlock()
+
+		go func(filesParam *FileWriter) {
 			defer wg.Done()
 			//fmt.Println("Start download url - ", filesParam.Uri)
 			DownloadFile(filesParam)
-		}(&FileParams{FileName: fileName, Uri: val})
+		}(&FileWriter{FileName: fileName, Uri: val})
 	}
 	bEndDownload := make(chan bool)
 	go PrintProgress(bEndDownload)

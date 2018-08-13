@@ -1,0 +1,48 @@
+You have 8 url
+foo2.zip | bar2.zip | 5MB.zip | 10MB.zip | 0.5.9.zip | e1fe9925bc315c60cb71c4748fb1cb1348547741.jpg | foo1.zip | bar1.zip
+
+		response status: 404 Not Found for url - http://foo.com/foo1.zip
+
+
+		response status: 404 Not Found for url - http://foo.com/foo2.zip
+
+0% 0% 0% 0% 0% 0% 0% 0% 
+0% 0% 0% 0% 0% 0% 0% 0% 
+
+			e1fe9925bc315c60cb71c4748fb1cb1348547741.jpg Transferred. (86.9 KB)
+
+0% 0% 7% 3% 0% 100% 0% 0% 
+0% 0% 23% 14% 7% 100% 0% 0% 
+
+		response status: 404 Not Found for url - http://bar.com/bar2.zip
+
+0% 0% 37% 22% 15% 100% 0% 0% 
+0% 0% 47% 28% 18% 100% 0% 0% 
+0% 0% 52% 34% 23% 100% 0% 0% 
+0% 0% 66% 38% 28% 100% 0% 0% 
+
+		response status: 404 Not Found for url - http://bar.com/bar1.zip
+
+0% 0% 76% 41% 34% 100% 0% 0% 
+0% 0% 91% 44% 39% 100% 0% 0% 
+
+			5MB.zip Transferred. (5120.0 KB)
+
+0% 0% 100% 47% 43% 100% 0% 0% 
+0% 0% 100% 50% 48% 100% 0% 0% 
+0% 0% 100% 54% 53% 100% 0% 0% 
+0% 0% 100% 58% 58% 100% 0% 0% 
+0% 0% 100% 64% 65% 100% 0% 0% 
+0% 0% 100% 69% 70% 100% 0% 0% 
+0% 0% 100% 74% 74% 100% 0% 0% 
+0% 0% 100% 80% 79% 100% 0% 0% 
+0% 0% 100% 86% 84% 100% 0% 0% 
+0% 0% 100% 93% 91% 100% 0% 0% 
+
+			10MB.zip Transferred. (10240.0 KB)
+
+0% 0% 100% 100% 98% 100% 0% 0% 
+
+			0.5.9.zip Transferred. (4119.7 KB)
+
+0% 0% 100% 100% 100% 100% 0% 0% 
